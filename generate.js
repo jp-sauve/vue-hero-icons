@@ -7,9 +7,21 @@ const pkg = require("./package.json");
 
 const componentTemplate = (name, svg) =>
   `
-export default {
-  name: '${name}',
-  
+  //import { h, reactive } from 'vue';
+
+  export default {
+    name: '${name}',
+    setup(props, context) {
+      const size = props.size.slice(-1) === 'x'
+        ? props.size.slice(0, props.size.length -1) + 'em'
+        : parseInt(props.size) + 'px';
+      const myAttrs = context.attrs || {};
+      myAttrs.width = context.attrs.width || size;
+      myAttrs.height = context.attrs.height || size;
+      context.attrs = myAttrs;
+
+      return ${svg.replace(/<svg([^>]+)>/, "<svg$1 {...context.data}>")}
+    },
   props: {
     size: {
       type: String,
@@ -17,21 +29,6 @@ export default {
       validator: (s) => (!isNaN(s) || s.length >= 2 && !isNaN(s.slice(0, s.length -1)) && s.slice(-1) === 'x' )
     }
   },
-
-  functional: true,
-
-  render(h, ctx) {
-    const size = ctx.props.size.slice(-1) === 'x' 
-      ? ctx.props.size.slice(0, ctx.props.size.length -1) + 'em'
-      : parseInt(ctx.props.size) + 'px';
-
-    const attrs = ctx.data.attrs || {}
-    attrs.width = attrs.width || size
-    attrs.height = attrs.height || size
-    ctx.data.attrs = attrs
-  
-    return ${svg.replace(/<svg([^>]+)>/, "<svg$1 {...ctx.data}>")}
-  }
 }
 `.trim();
 
@@ -80,7 +77,7 @@ async function main() {
       };
     });
 
-    icons.push(...iconsByCategory);
+    icons.push(...iconsByCategory);//TODO: remove, since iconsByCategory is already an array!
   }
   for (const icon of icons) {
     // Create Vue component files
